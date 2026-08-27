@@ -18,10 +18,12 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
 
-        String baseUrl = "";
+        String baseUrl = "/auth";
 
         httpSecurity.authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.GET, "/public-hello").permitAll()
+                .requestMatchers(HttpMethod.GET, baseUrl + "/public-hello").permitAll()
+                .requestMatchers(HttpMethod.POST, baseUrl + "/login").permitAll()
+                .requestMatchers(HttpMethod.POST, baseUrl + "/create-account").permitAll()
                 .anyRequest().authenticated())
 
                 .csrf(csrf -> csrf.disable())
