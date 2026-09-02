@@ -24,6 +24,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, baseUrl + "/public-hello").permitAll()
                 .requestMatchers(HttpMethod.POST, baseUrl + "/login").permitAll()
                 .requestMatchers(HttpMethod.POST, baseUrl + "/create-account").permitAll()
+
+                .requestMatchers("/api/customer/me/**").permitAll()
                 .anyRequest().authenticated())
 
                 .csrf(csrf -> csrf.disable())

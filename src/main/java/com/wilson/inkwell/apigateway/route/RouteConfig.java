@@ -5,6 +5,7 @@ import org.springframework.cloud.gateway.server.mvc.handler.GatewayRouterFunctio
 import org.springframework.cloud.gateway.server.mvc.handler.HandlerFunctions;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.web.servlet.function.RequestPredicates;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.ServerResponse;
@@ -27,6 +28,26 @@ public class RouteConfig {
                 .before(BeforeFilterFunctions.uri("http://localhost:8081"))
                 .before(BeforeFilterFunctions.rewritePath("/(?<segment>.*)", "/api/${segment}"))
 
+                .build();
+    }
+
+    /**
+     * Configures a RouterFunction and builds a gatweway to the Customer Service.
+     * 
+     * @return RouterFunction for the customer service
+     */
+    @Bean
+    RouterFunction<ServerResponse> customerServiceRouting() {
+        return GatewayRouterFunctions
+                .route("customer-service")
+                .route(
+                    // any request to this resource is by definition matched and 
+                    // authenticated, so I believe I can omit http method matchers
+                    RequestPredicates.path("/api/customer/me/**"), 
+                    HandlerFunctions.http()
+                )
+                .before(BeforeFilterFunctions.uri("http://localhost:8083"))
+                .before(BeforeFilterFunctions.rewritePath("/(?<segment>.*)", "${segment}"))
                 .build();
     }
 
