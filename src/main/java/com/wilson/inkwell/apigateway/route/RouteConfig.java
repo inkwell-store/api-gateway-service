@@ -23,10 +23,11 @@ public class RouteConfig {
     RouterFunction<ServerResponse> authorizationServiceRouting() {
         return GatewayRouterFunctions
                 .route("authorization-service") 
-                .route(RequestPredicates.POST("/auth/login"), HandlerFunctions.http())
-                .route(RequestPredicates.POST("/auth/create-account"), HandlerFunctions.http())
+                .route(RequestPredicates.POST("/api/auth/login"), HandlerFunctions.http())
+                .route(RequestPredicates.POST("/api/auth/create-account"), HandlerFunctions.http())
+                .route(RequestPredicates.POST("/api/auth/refresh"), HandlerFunctions.http())
                 .before(BeforeFilterFunctions.uri("http://localhost:8081"))
-                .before(BeforeFilterFunctions.rewritePath("/(?<segment>.*)", "/api/${segment}"))
+                // .before(BeforeFilterFunctions.rewritePath("/(?<segment>.*)", "${segment}"))
 
                 .build();
     }
@@ -47,7 +48,7 @@ public class RouteConfig {
                     HandlerFunctions.http()
                 )
                 .before(BeforeFilterFunctions.uri("http://localhost:8083"))
-                .before(BeforeFilterFunctions.rewritePath("/(?<segment>.*)", "${segment}"))
+                // .before(BeforeFilterFunctions.rewritePath("/(?<segment>.*)", "${segment}"))
                 .build();
     }
 
