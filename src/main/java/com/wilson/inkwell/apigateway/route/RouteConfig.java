@@ -51,7 +51,7 @@ public class RouteConfig {
                 .route(
                     // any request to this resource is by definition matched and 
                     // authenticated, so I believe I can omit http method matchers
-                    RequestPredicates.path("/api/customer/me/**"), 
+                    RequestPredicates.path("/api/customers/me/**"), 
                     HandlerFunctions.http()
                 )
                 .before(BeforeFilterFunctions.uri("http://" + customerServiceName + ":8083"))
