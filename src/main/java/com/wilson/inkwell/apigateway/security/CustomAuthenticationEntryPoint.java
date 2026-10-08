@@ -44,7 +44,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
 
                 HttpErrorResponseBody body = new HttpErrorResponseBody(
                     status, 
-                    HttpErrorEnum.ACESSS_TOKEN_INVALID, 
+                    HttpErrorEnum.ACCESS_TOKEN_INVALID, 
                     "no valid access token was provided as a bearer token.", 
                     Instant.now());
 

@@ -1,5 +1,6 @@
 package com.wilson.inkwell.apigateway.route;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.server.mvc.filter.BeforeFilterFunctions;
 import org.springframework.cloud.gateway.server.mvc.handler.GatewayRouterFunctions;
 import org.springframework.cloud.gateway.server.mvc.handler.HandlerFunctions;
@@ -12,6 +13,12 @@ import org.springframework.web.servlet.function.ServerResponse;
 
 @Configuration
 public class RouteConfig {
+
+    @Value("${network.authority.name.authorizationservice}") 
+    String authorizationServiceName;
+
+    @Value("${network.authority.name.customerservice}") 
+    String customerServiceName;
 
     /**
      * Configures a RouterFunction and builds a gatweway to
@@ -26,7 +33,7 @@ public class RouteConfig {
                 .route(RequestPredicates.POST("/api/auth/login"), HandlerFunctions.http())
                 .route(RequestPredicates.POST("/api/auth/create-account"), HandlerFunctions.http())
                 .route(RequestPredicates.POST("/api/auth/refresh"), HandlerFunctions.http())
-                .before(BeforeFilterFunctions.uri("http://localhost:8081"))
+                .before(BeforeFilterFunctions.uri("http://" + authorizationServiceName + ":8081"))
                 // .before(BeforeFilterFunctions.rewritePath("/(?<segment>.*)", "${segment}"))
 
                 .build();
@@ -47,7 +54,7 @@ public class RouteConfig {
                     RequestPredicates.path("/api/customer/me/**"), 
                     HandlerFunctions.http()
                 )
-                .before(BeforeFilterFunctions.uri("http://localhost:8083"))
+                .before(BeforeFilterFunctions.uri("http://" + customerServiceName + ":8083"))
                 // .before(BeforeFilterFunctions.rewritePath("/(?<segment>.*)", "${segment}"))
                 .build();
     }

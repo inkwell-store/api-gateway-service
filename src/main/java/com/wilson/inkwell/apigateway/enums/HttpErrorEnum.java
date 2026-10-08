@@ -1,5 +1,5 @@
 package com.wilson.inkwell.apigateway.enums;
 
 public enum HttpErrorEnum {
-    ACESSS_TOKEN_INVALID
+    ACCESS_TOKEN_INVALID
 }

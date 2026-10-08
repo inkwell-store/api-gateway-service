@@ -26,13 +26,12 @@ public class SecurityConfig {
         String BASE_URL = "/api/auth";
 
         httpSecurity.authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.GET, BASE_URL + "/public-hello").permitAll()
                 .requestMatchers(HttpMethod.POST, BASE_URL + "/login").permitAll()
                 .requestMatchers(HttpMethod.POST, BASE_URL + "/create-account").permitAll()
+                .requestMatchers(HttpMethod.POST, BASE_URL + "/refresh").permitAll()
 
-                // .requestMatchers("/api/customer/me/**").hasAuthority(RoleEnum.ROLE_CUSTOMER.toString())
-                .requestMatchers("/api/customer/me/**").authenticated()
-                
+                .requestMatchers("/api/customer/me/**").hasAuthority(RoleEnum.ROLE_CUSTOMER.toString())
+
                 .anyRequest().authenticated())
 
                 .csrf(csrf -> csrf.disable())
@@ -64,9 +63,10 @@ public class SecurityConfig {
     UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of("http://localhost:4200")); // here I can other possible origins
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedOrigins(List.of("http://localhost:4200", "http://front-end:4201")); // here I can other possible origins
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
