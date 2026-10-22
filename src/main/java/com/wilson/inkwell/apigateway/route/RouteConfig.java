@@ -28,11 +28,13 @@ public class RouteConfig {
      */
     @Bean
     RouterFunction<ServerResponse> authorizationServiceRouting() {
+        String BASE_PATH = "/api/auth/";
         return GatewayRouterFunctions
                 .route("authorization-service") 
-                .route(RequestPredicates.POST("/api/auth/login"), HandlerFunctions.http())
-                .route(RequestPredicates.POST("/api/auth/create-account"), HandlerFunctions.http())
-                .route(RequestPredicates.POST("/api/auth/refresh"), HandlerFunctions.http())
+                .route(RequestPredicates.POST(BASE_PATH + "login"), HandlerFunctions.http())
+                .route(RequestPredicates.POST(BASE_PATH + "create-account"), HandlerFunctions.http())
+                .route(RequestPredicates.POST(BASE_PATH + "refresh"), HandlerFunctions.http())
+                .route(RequestPredicates.POST(BASE_PATH + "logout"), HandlerFunctions.http())
                 .before(BeforeFilterFunctions.uri("http://" + authorizationServiceName + ":8081"))
                 // .before(BeforeFilterFunctions.rewritePath("/(?<segment>.*)", "${segment}"))
 
