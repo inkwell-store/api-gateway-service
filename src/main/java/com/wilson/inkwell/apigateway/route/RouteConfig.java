@@ -6,19 +6,32 @@ import org.springframework.cloud.gateway.server.mvc.handler.GatewayRouterFunctio
 import org.springframework.cloud.gateway.server.mvc.handler.HandlerFunctions;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.web.servlet.function.RequestPredicates;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.ServerResponse;
 
+import com.wilson.inkwell.apigateway.route.handler.CustomerProfileQueryHandler;
+import com.wilson.inkwell.apigateway.utils.ResourceName;
+
+import lombok.RequiredArgsConstructor;
+
 @Configuration
+@RequiredArgsConstructor 
 public class RouteConfig {
+
+    private final CustomerProfileQueryHandler customerProfileQueryHandler;
 
     @Value("${network.authority.name.authorizationservice}") 
     String authorizationServiceName;
 
     @Value("${network.authority.name.customerservice}") 
     String customerServiceName;
+
+    @Value("${network.server.port.customerservice}")
+    private int customerServicePort;
+
+    @Value("${network.server.port.authorizationservice}")
+    private int authorizationServicePort;
 
     /**
      * Configures a RouterFunction and builds a gatweway to
@@ -28,36 +41,61 @@ public class RouteConfig {
      */
     @Bean
     RouterFunction<ServerResponse> authorizationServiceRouting() {
-        String BASE_PATH = "/api/auth/";
+
+        String BASE_PATH = "/" + 
+                           ResourceName.API + 
+                           "/" + 
+                           ResourceName.AUTH + 
+                           "/";
+
         return GatewayRouterFunctions
                 .route("authorization-service") 
-                .route(RequestPredicates.POST(BASE_PATH + "login"), HandlerFunctions.http())
-                .route(RequestPredicates.POST(BASE_PATH + "create-account"), HandlerFunctions.http())
-                .route(RequestPredicates.POST(BASE_PATH + "refresh"), HandlerFunctions.http())
-                .route(RequestPredicates.POST(BASE_PATH + "logout"), HandlerFunctions.http())
-                .before(BeforeFilterFunctions.uri("http://" + authorizationServiceName + ":8081"))
-                // .before(BeforeFilterFunctions.rewritePath("/(?<segment>.*)", "${segment}"))
+                // TODO I think I should just replace all these definitions with a single wild card */
+                .route(RequestPredicates.POST(BASE_PATH + ResourceName.LOGIN), HandlerFunctions.http())
+                .route(RequestPredicates.POST(BASE_PATH + ResourceName.CREATE_ACCOUNT), HandlerFunctions.http())
+                .route(RequestPredicates.POST(BASE_PATH + ResourceName.REFRESH), HandlerFunctions.http())
+                .route(RequestPredicates.POST(BASE_PATH + ResourceName.LOGOUT), HandlerFunctions.http())
+                .route(RequestPredicates.GET(BASE_PATH + "/" + ResourceName.ME + "/" + ResourceName.EMAIL), HandlerFunctions.http())
+                .before(BeforeFilterFunctions.uri("http://" + authorizationServiceName + ":" + authorizationServicePort))
 
                 .build();
     }
 
-    /**
-     * Configures a RouterFunction and builds a gatweway to the Customer Service.
-     * 
-     * @return RouterFunction for the customer service
-     */
     @Bean
-    RouterFunction<ServerResponse> customerServiceRouting() {
+    RouterFunction<ServerResponse> customerProfileRouting() {
+
+        String BASE_PATH = "/" + 
+                           ResourceName.API + 
+                           "/" + 
+                           ResourceName.CUSTOMERS + 
+                           "/" + 
+                           ResourceName.ME + 
+                           "/";
+
         return GatewayRouterFunctions
-                .route("customer-service")
-                .route(
-                    // any request to this resource is by definition matched and 
-                    // authenticated, so I believe I can omit http method matchers
-                    RequestPredicates.path("/api/customers/me/**"), 
-                    HandlerFunctions.http()
-                )
-                .before(BeforeFilterFunctions.uri("http://" + customerServiceName + ":8083"))
-                // .before(BeforeFilterFunctions.rewritePath("/(?<segment>.*)", "${segment}"))
+                .route("customer-profile-route")
+                .route(RequestPredicates.GET(BASE_PATH + ResourceName.PROFILE), customerProfileQueryHandler)
+                
+                .build();
+    }
+
+    @Bean
+    RouterFunction<ServerResponse> customerAddressRouting() {
+
+        String BASE_PATH = "/" + 
+                           ResourceName.API + 
+                           "/" + 
+                           ResourceName.CUSTOMERS + 
+                           "/" + 
+                           ResourceName.ME + 
+                           "/";
+
+        return GatewayRouterFunctions
+                .route("customer-address-route")
+                
+                // proxy the request
+                .route(RequestPredicates.GET(BASE_PATH + ResourceName.ADDRESSES), HandlerFunctions.http())
+                .before(BeforeFilterFunctions.uri("http://" + customerServiceName + ":" + customerServicePort))
                 .build();
     }
 

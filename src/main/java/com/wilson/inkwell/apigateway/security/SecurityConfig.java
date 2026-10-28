@@ -15,6 +15,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.wilson.inkwell.apigateway.enums.RoleEnum;
+import com.wilson.inkwell.apigateway.utils.ResourceName;
 
 @Configuration
 @EnableWebSecurity
@@ -23,14 +24,16 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain filterChain(HttpSecurity httpSecurity, AuthenticationEntryPoint authenticationEntryPoint) throws Exception {
 
-        String BASE_URL = "/api/auth";
+        String BASE_URL = "/" + ResourceName.API + "/" + ResourceName.AUTH;
 
         httpSecurity.authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.POST, BASE_URL + "/login").permitAll()
-                .requestMatchers(HttpMethod.POST, BASE_URL + "/create-account").permitAll()
-                .requestMatchers(HttpMethod.POST, BASE_URL + "/refresh").permitAll()
+                .requestMatchers(HttpMethod.POST, BASE_URL + "/" + ResourceName.LOGIN).permitAll()
+                .requestMatchers(HttpMethod.POST, BASE_URL + "/" + ResourceName.CREATE_ACCOUNT).permitAll()
+                .requestMatchers(HttpMethod.POST, BASE_URL + "/" + ResourceName.REFRESH).permitAll()
 
-                .requestMatchers("/api/customer/me/**").hasAuthority(RoleEnum.ROLE_CUSTOMER.toString())
+                .requestMatchers(
+                    "/" + ResourceName.API + "/" + ResourceName.CUSTOMERS + "/" + ResourceName.ME + "/**"
+                ).hasAuthority(RoleEnum.ROLE_CUSTOMER.toString())
 
                 .anyRequest().authenticated())
 
