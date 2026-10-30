@@ -75,7 +75,7 @@ public class RouteConfig {
         return GatewayRouterFunctions
                 .route("customer-profile-route")
                 .route(RequestPredicates.GET(BASE_PATH + ResourceName.PROFILE), customerProfileQueryHandler)
-                
+                // TODO add a PATCH here
                 .build();
     }
 
@@ -93,8 +93,8 @@ public class RouteConfig {
         return GatewayRouterFunctions
                 .route("customer-address-route")
                 
-                // proxy the request
-                .route(RequestPredicates.GET(BASE_PATH + ResourceName.ADDRESSES), HandlerFunctions.http())
+                // proxy all requests
+                .route(RequestPredicates.path(BASE_PATH + ResourceName.ADDRESSES + "/**"), HandlerFunctions.http())
                 .before(BeforeFilterFunctions.uri("http://" + customerServiceName + ":" + customerServicePort))
                 .build();
     }

@@ -1,6 +1,5 @@
 package com.wilson.inkwell.apigateway.service;
 
-import java.net.URI;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -17,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.servlet.function.ServerRequest;
 
+import com.wilson.inkwell.apigateway.dto.ApiAggregationResponse;
 import com.wilson.inkwell.apigateway.utils.ResourceName;
 
 import lombok.RequiredArgsConstructor;
@@ -53,7 +53,7 @@ public class CustomerProfileAggregatorService {
 
         Map<String, Object> responseBoby = new HashMap<>();
 
-        Set<CompletableFuture<Map<String, Object>>> queries = new HashSet<>();
+        Set<CompletableFuture<ApiAggregationResponse>> queries = new HashSet<>();
 
         // The endpoint is authenticated using spring security, if the request reaches
         // this point I can know for certain the authorization header is present and
@@ -63,9 +63,8 @@ public class CustomerProfileAggregatorService {
         // if any customer attributes are present
         if (!customerAttributes.isEmpty()) {
 
-            log.info("Calling customer-service...");
-
             queries.add(CompletableFuture.supplyAsync(()-> {
+                log.info("Calling customer-service...");
                 return customerServiceRequest(customerAttributes, accessToken);
             }));
 
@@ -74,10 +73,9 @@ public class CustomerProfileAggregatorService {
         // if any auth attributes are present
         if (!authAttributes.isEmpty()) {
 
-            log.info("Calling authorization-service...");
-
             queries.add(CompletableFuture.supplyAsync(()-> {
-                return authorizationServiceRequest(customerAttributes, accessToken);
+                log.info("Calling authorization-service...");
+                return authorizationServiceRequest(accessToken);
             }));
         }
 
@@ -87,18 +85,39 @@ public class CustomerProfileAggregatorService {
         try {
 
             // Here I wait for the responses
-            for(CompletableFuture<Map<String, Object>> response : queries) {
-                responseBoby.putAll(response.get());
+            for(CompletableFuture<ApiAggregationResponse> response : queries) {
+
+                // here I neeed to inspect the response's body.
+                // if something goes wrong in any of these requests I should return the error
+                // as the body immediately. The first error that is found will be the one returned.
+
+                // the request was successful in the range of 2XX
+                if(String.valueOf(response.get().status()).startsWith("2")) {
+                    responseBoby.putAll(response.get().body());
+                } else {
+
+                    log.debug("A request returned status:" + response.get().status());
+
+                    // if the response is not successful then clear the body, add the error and retunr
+                    responseBoby.clear();
+                    responseBoby.putAll(response.get().body());
+                    break;
+                }
+                
             }
         
         } catch (CancellationException | CompletionException | InterruptedException | ExecutionException e) {
+            // find a way to map these exceptions to a proper response
             throw new RuntimeException(e.getMessage());
         }
 
         return responseBoby;
     }
 
-    private Map<String, Object> authorizationServiceRequest(Set<String> authAttributes, String bearerToken) {
+    /**
+     * Calls an http get request to authorization-service to fetch attributes for a customer's profile 
+     */
+    private ApiAggregationResponse authorizationServiceRequest(String bearerToken) {
         
         String path = "/" +
                       ResourceName.API +
@@ -118,12 +137,21 @@ public class CustomerProfileAggregatorService {
                          )
                          .header(AUTHORIZATION_HEADER, bearerToken)
                          .accept(MediaType.APPLICATION_JSON)
-                         .retrieve()
-                         .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+                         .exchange((req, res) -> {
+
+                            return new ApiAggregationResponse(
+                                res.getStatusCode().value(),
+                                res.bodyTo(new ParameterizedTypeReference<Map<String, Object>>() {})
+                            );
+
+                         });
 
     }
 
-    private Map<String, Object> customerServiceRequest(Set<String> profileAttributes, String bearerToken) {
+    /**
+     * Calls an http get request to customer-service to fetch attributes for a customer's profile 
+     */
+    private ApiAggregationResponse customerServiceRequest(Set<String> profileAttributes, String bearerToken) {
 
         String path = "/" +
                       ResourceName.API +
@@ -140,12 +168,17 @@ public class CustomerProfileAggregatorService {
                                                   .host(customerServiceHost)
                                                   .scheme("http")
                                                   .queryParam(PROFILE_PARAM_NAME, String.join(",", profileAttributes))
-                                                  .build()
-                         )
+                                                  .build())
                          .header(AUTHORIZATION_HEADER, bearerToken)
                          .accept(MediaType.APPLICATION_JSON)
-                         .retrieve()
-                         .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+                         .exchange((req, res) -> {
+
+                            return new ApiAggregationResponse(
+                                res.getStatusCode().value(),
+                                res.bodyTo(new ParameterizedTypeReference<Map<String, Object>>() {})
+                            );
+
+                         });
 
     }
 
