@@ -30,6 +30,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, BASE_URL + "/" + ResourceName.LOGIN).permitAll()
                 .requestMatchers(HttpMethod.POST, BASE_URL + "/" + ResourceName.CREATE_ACCOUNT).permitAll()
                 .requestMatchers(HttpMethod.POST, BASE_URL + "/" + ResourceName.REFRESH).permitAll()
+                .requestMatchers(HttpMethod.POST, BASE_URL + "/" + ResourceName.LOGOUT).permitAll()
 
                 .requestMatchers(
                     "/" + ResourceName.API + "/" + ResourceName.CUSTOMERS + "/" + ResourceName.ME + "/**"
