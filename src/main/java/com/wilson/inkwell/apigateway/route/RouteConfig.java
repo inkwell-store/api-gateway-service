@@ -75,8 +75,14 @@ public class RouteConfig {
         return GatewayRouterFunctions
                 .route("customer-profile-route")
                 .route(RequestPredicates.GET(BASE_PATH + ResourceName.PROFILE), customerProfileQueryHandler)
-                // TODO add a PATCH here
-                .build();
+                .build()
+                .and(
+                    GatewayRouterFunctions.route("customer-patch-route")
+                                          .route(RequestPredicates.PATCH(BASE_PATH + ResourceName.PROFILE), HandlerFunctions.http())
+                                          // TODO update(PATCH) profile should have its own route
+                                          .before(BeforeFilterFunctions.uri("http://" + customerServiceName + ":" + customerServicePort))
+                                          .build()
+                );
     }
 
     @Bean
