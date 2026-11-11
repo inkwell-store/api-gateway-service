@@ -6,17 +6,18 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.servlet.function.ServerRequest;
 
 import com.wilson.inkwell.apigateway.dto.ApiAggregationResponse;
+import com.wilson.inkwell.apigateway.exception.ServiceUnavailableException;
 import com.wilson.inkwell.apigateway.utils.ResourceName;
 
 import lombok.RequiredArgsConstructor;
@@ -48,7 +49,9 @@ public class CustomerProfileAggregatorService {
      * calling multiple services, the request are run in parallel using CompletableFutures and, if
      * any of them fail it returns an error response.
      */
-    public Map<String, Object> getProfile(ServerRequest request, Set<String> customerAttributes,
+    public Map<String, Object> getProfile(
+            ServerRequest request, 
+            Set<String> customerAttributes,
             Set<String> authAttributes) {
 
         Map<String, Object> responseBoby = new HashMap<>();
@@ -80,7 +83,7 @@ public class CustomerProfileAggregatorService {
         }
 
         // converting the set to an array (weird syntax)
-        CompletableFuture.allOf(queries.toArray(new CompletableFuture[0])); 
+        // CompletableFuture.allOf(queries.toArray(new CompletableFuture[0])); 
 
         try {
 
@@ -96,7 +99,7 @@ public class CustomerProfileAggregatorService {
                     responseBoby.putAll(response.get().body());
                 } else {
 
-                    log.debug("A request returned status:" + response.get().status());
+                    log.debug("A request returned an error status of: " + response.get().status());
 
                     // if the response is not successful then clear the body, add the error and retunr
                     responseBoby.clear();
@@ -106,9 +109,24 @@ public class CustomerProfileAggregatorService {
                 
             }
         
-        } catch (CancellationException | CompletionException | InterruptedException | ExecutionException e) {
+        } catch (CancellationException | InterruptedException  e) {
+            
             // find a way to map these exceptions to a proper response
+            e.printStackTrace();
             throw new RuntimeException(e.getMessage());
+
+        } catch(ExecutionException e) {
+
+            // here the future completed exceptionally. To better inform the client of what happened
+            // I need to inspect the cause of the error and then return the appropriate response.
+            Throwable cause = e.getCause();
+
+            // TODO If the downstream service is down likely exceptions are, or at least these 
+            // are the ones I was able to find. Need to search more about it later
+            if (cause instanceof ResourceAccessException) {
+                throw new ServiceUnavailableException("A downstream service is not available right now");
+            }
+
         }
 
         return responseBoby;
@@ -135,10 +153,10 @@ public class CustomerProfileAggregatorService {
                                                   .scheme("http")
                                                   .build()
                          )
-                         .header(AUTHORIZATION_HEADER, bearerToken)
+                         .header(AUTHORIZATION_HEADER, "bearerToken")
                          .accept(MediaType.APPLICATION_JSON)
                          .exchange((req, res) -> {
-
+                            
                             return new ApiAggregationResponse(
                                 res.getStatusCode().value(),
                                 res.bodyTo(new ParameterizedTypeReference<Map<String, Object>>() {})
@@ -172,6 +190,7 @@ public class CustomerProfileAggregatorService {
                          .header(AUTHORIZATION_HEADER, bearerToken)
                          .accept(MediaType.APPLICATION_JSON)
                          .exchange((req, res) -> {
+                            log.info(res.toString());
 
                             return new ApiAggregationResponse(
                                 res.getStatusCode().value(),

@@ -1,9 +1,11 @@
 package com.wilson.inkwell.apigateway.exception;
 
-public class ServiceTimedoutException extends RuntimeException{
+import com.wilson.inkwell.apigateway.enums.HttpErrorEnum;
 
-    public ServiceTimedoutException(String message) {
-        super(message);
+public class ServiceTimedoutException extends HttpCustomException{
+
+    public ServiceTimedoutException(String message, HttpErrorEnum errorType) {
+        super(message, errorType);
     }
     
 }

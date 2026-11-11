@@ -12,6 +12,7 @@ import org.springframework.web.servlet.function.HandlerFunction;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
+import com.wilson.inkwell.apigateway.enums.HttpErrorEnum;
 import com.wilson.inkwell.apigateway.exception.InvalidRequestParameter;
 import com.wilson.inkwell.apigateway.service.CustomerProfileAggregatorService;
 
@@ -61,7 +62,8 @@ public final class CustomerProfileQueryHandler implements HandlerFunction<Server
                         && !CUSTOMER_SERVICE_ATTRIBUTES.contains(attributeValue)) {
 
                     throw new InvalidRequestParameter(
-                            "Parameter value " + attributeValue + " not supported for profile resource");
+                            "Parameter value: " + attributeValue + " not supported for resource: profile "
+                    );
 
                 } else if (AUTH_SERVICE_ATTRIBUTES.contains(attributeValue)) {
                     requestAuthenticationAttributes.add(attributeValue);

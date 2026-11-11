@@ -10,6 +10,7 @@ import org.springframework.web.servlet.function.RequestPredicates;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.ServerResponse;
 
+import com.wilson.inkwell.apigateway.route.filter.ExceptionHandlerFilter;
 import com.wilson.inkwell.apigateway.route.handler.CustomerProfileQueryHandler;
 import com.wilson.inkwell.apigateway.utils.ResourceName;
 
@@ -20,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 public class RouteConfig {
 
     private final CustomerProfileQueryHandler customerProfileQueryHandler;
+    private final ExceptionHandlerFilter exceptionHandlerFilter;
 
     @Value("${network.authority.name.authorizationservice}") 
     String authorizationServiceName;
@@ -75,11 +77,12 @@ public class RouteConfig {
         return GatewayRouterFunctions
                 .route("customer-profile-route")
                 .route(RequestPredicates.GET(BASE_PATH + ResourceName.PROFILE), customerProfileQueryHandler)
+                .filter(exceptionHandlerFilter)
                 .build()
                 .and(
                     GatewayRouterFunctions.route("customer-patch-route")
                                           .route(RequestPredicates.PATCH(BASE_PATH + ResourceName.PROFILE), HandlerFunctions.http())
-                                          // TODO update(PATCH) profile should have its own route
+                                          // TODO update(PATCH) photo should have its own route
                                           .before(BeforeFilterFunctions.uri("http://" + customerServiceName + ":" + customerServicePort))
                                           .build()
                 );
